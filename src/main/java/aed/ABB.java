@@ -47,9 +47,37 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
 
     public void insertar(T elem){
         if(pertenece(elem)){}
-        else{//implementar
-    }}
+        else{ 
+            Nodo ultimoBuscado = perteneceUltimo(elem);
+            Nodo nuevo = new Nodo (elem);
+            nuevo.padre = ultimoBuscado; 
+            if (ultimoBuscado.valor.compareTo(nuevo.valor)>0){
+                ultimoBuscado.hijoIzquierda = nuevo;
+            }else{
+                ultimoBuscado.hijoDerecha = nuevo;
+            } //no se que tan bien esta
+        }
+    }
 
+    private Nodo perteneceUltimo(T elem){
+        Nodo apuntado=this.raiz;
+        while (true) {
+            if(apuntado.valor.compareTo(elem)>0){ //apuntado>elem
+                if(apuntado.hijoIzquierda == null){
+                    return apuntado;
+                }else{
+                    apuntado = apuntado.hijoIzquierda;
+                }
+            }else if(elem.compareTo(apuntado.valor)>0){ //apuntado<elem
+                if(apuntado.hijoDerecha == null){
+                    return apuntado;
+                }else{
+                    apuntado = apuntado.hijoDerecha;
+                }
+            }
+        } 
+    }
+    
     public boolean pertenece(T elem){
         Nodo apuntado=this.raiz;
         while (true) {
@@ -70,8 +98,9 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             }
         } 
     }
+
     public void eliminar(T elem){
-        throw new UnsupportedOperationException("No implementada aun");
+        
     }
 
     public String toString(){
