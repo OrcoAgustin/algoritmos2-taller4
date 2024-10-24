@@ -4,7 +4,7 @@ package aed;
 public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     private Nodo raiz;
     private int cardinal;
-    private int altura;
+    private int altura; //sirve?
 
     private class Nodo {
         private T valor;
@@ -63,84 +63,101 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     
     public boolean pertenece(T elem){
         Nodo apuntado = this.raiz;
-        Boolean res = pertenceRecursivo(elem, apuntado);
-        return res;
+        return pertenceRecursivo(elem, apuntado);
     }
 
     public void eliminar(T elem) {
-        if (this.pertenece(elem) == false) {  // Caso A: no pertenece
+        // Caso A: Si no pertenece, no hacemos nada
+        if (this.pertenece(elem) == false) {  
             return;
-        } 
+        }
         Nodo nodo = encontrarNodo(this.raiz, elem);
         if (nodo == null) {  
             return;  
         }
         Nodo padre = nodo.padre;
-          
+    
         // Caso B: es raíz sin hijos
         if (nodo == this.raiz && nodo.hijoDerecha == null && nodo.hijoIzquierda == null) {
             this.raiz = null;
             this.cardinal = 0;
             return;
-        } 
-        switch (cantidadHijos(nodo)) {  // Caso C: 0/1/2 hijos, no raíz
-            case 0: 
-                this.cardinal -= 1;
-                if (padre != null) {  
-                    if (padre.hijoIzquierda == nodo) {
-                        padre.hijoIzquierda = null;
-                    } else {
-                        padre.hijoDerecha = null;
-                    }
+        }
+    
+        // Caso C.0: Nodo sin hijos
+        if (cantidadHijos(nodo) == 0) {
+            if (padre != null) {  
+                if (padre.hijoIzquierda == nodo) {
+                    padre.hijoIzquierda = null;
+                } else {
+                    padre.hijoDerecha = null;
                 }
-                nodo.padre = null; 
-                break;
-            case 1: 
-                Nodo huerfano = null;
-                if(nodo.hijoDerecha == null){
-                    huerfano = nodo.hijoIzquierda;
-                }else{
-                    huerfano = nodo.hijoDerecha;
+            } else {// Si el nodo fuese la raíz
+                this.raiz = null;
+            }
+            nodo.padre = null; 
+            this.cardinal -= 1;
+            return;
+        }
+    
+        // Caso C.1: Nodo con un hijo
+        if (cantidadHijos(nodo) == 1) {
+            Nodo huerfano = null;
+            if(nodo.hijoDerecha != null){
+                huerfano=nodo.hijoDerecha; 
+            }else{
+                huerfano=nodo.hijoIzquierda;
+            }
+            if (padre != null) {  
+                if (padre.hijoIzquierda == nodo) {
+                    padre.hijoIzquierda = huerfano;
+                } else {
+                    padre.hijoDerecha = huerfano;
                 }
-                if (padre != null) {  
-                    if (padre.hijoIzquierda == nodo) {
-                        padre.hijoIzquierda = huerfano;
-                    } else {
-                        padre.hijoDerecha = huerfano;
-                    }
-                } else {  // Si el nodo es la raíz
-                    this.raiz = huerfano;
+            } else {// Si el nodo es la raíz
+                this.raiz = huerfano;
+            }
+            if (huerfano != null) {
+                huerfano.padre = padre;
+            }
+            nodo.padre = null; 
+            this.cardinal -= 1;
+            return;
+        }
+    
+        // Caso C.2:Nodo con dos hijos
+        if (cantidadHijos(nodo) == 2) {
+            Nodo sucesor = hallarMinimo(nodo.hijoDerecha);
+            if (sucesor != nodo.hijoDerecha) {//si no es el hijo directo del nodo a borrar
+                Nodo padreSucesor = sucesor.padre;
+                if (sucesor.hijoDerecha != null) {
+                    padreSucesor.hijoIzquierda = sucesor.hijoDerecha;
+                    sucesor.hijoDerecha.padre = padreSucesor;
+                } else {
+                    padreSucesor.hijoIzquierda = null;
                 }
-                if (huerfano != null) { 
-                    huerfano.padre = padre;
+                sucesor.hijoDerecha = nodo.hijoDerecha;
+                if (nodo.hijoDerecha != null) {
+                    nodo.hijoDerecha.padre = sucesor;
                 }
-                this.cardinal -= 1;
-                
-                break;
-            case 2: 
-                Nodo sucesor = sucesorInmediato(nodo.hijoDerecha);
-                if (sucesor != null) {  
-                    sucesor.padre = nodo.padre; 
-                    if (nodo.padre == null) {  // Si es raiz
-                        this.raiz = sucesor;
-                        this.raiz.padre = null;
-                    } else if (nodo.padre.hijoIzquierda == nodo) {
-                        nodo.padre.hijoIzquierda = sucesor;
-                    } else {
-                        nodo.padre.hijoDerecha = sucesor;
-                    }
-                    sucesor.hijoIzquierda = nodo.hijoIzquierda;
-                    if (nodo.hijoDerecha != sucesor) { 
-                        sucesor.hijoDerecha = nodo.hijoDerecha; 
-                    }
-                }
-                this.cardinal -= 1;
+            }
+            sucesor.hijoIzquierda = nodo.hijoIzquierda;
+            if (nodo.hijoIzquierda != null) {
                 nodo.hijoIzquierda.padre = sucesor;
-                nodo.hijoDerecha.padre = sucesor;
-                
-                break;
+            }
+            sucesor.padre = nodo.padre;
+            if (nodo.padre == null) {// Si el nodo es la raíz
+                this.raiz = sucesor;
+            } else if (nodo.padre.hijoIzquierda == nodo) {
+                nodo.padre.hijoIzquierda = sucesor;
+            } else {
+                nodo.padre.hijoDerecha = sucesor;
+            }
+            nodo.padre = null;
+            this.cardinal -= 1;
         }
     }
+    
     
 
     public String toString(){
@@ -158,7 +175,7 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     }
 
     private class ABB_Iterador implements Iterador<T> {
-        private Nodo _actual = hallarNodoConMinimo(raiz);
+        private Nodo _actual = hallarMinimo(raiz);
         
         public boolean haySiguiente() {            
             return this._actual != null; 
@@ -229,52 +246,31 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         return hijos;
     } 
 
-    // Encuentra un nodo y lo devuelve
+    // encuentra un nodo y lo devuelve
     private Nodo encontrarNodo(Nodo arbol, T target) {
-        // Verifica si el árbol es nulo
         if (arbol == null) {
-        return null;  // Devuelve null si no se encuentra el nodo
+            return null;// devuelve null si no se encontrase el nodo
         }else if (arbol.valor.equals(target)) {
             return arbol;  
-        } else if (arbol.valor.compareTo(target) > 0) {  // arbol > target
+        } else if (arbol.valor.compareTo(target) > 0) {// arbol>target => voy x la izquierda
             return encontrarNodo(arbol.hijoIzquierda, target);
         } else {
             return encontrarNodo(arbol.hijoDerecha, target);
         }
     }
 
-    //encuentra el nodo menor del lado derecho del arbol
-    private Nodo sucesorInmediato(Nodo arbol) {
-        if (arbol == null) {
-            return null;  // Manejar el caso donde el nodo es null
-        }
-    
-        // Si no tiene hijo izquierdo, este es el sucesor
-        if (arbol.hijoIzquierda == null) {
-            Nodo padre = arbol.padre;
-            
-            // Verifica si el padre no es null antes de acceder a sus hijos
-            if (padre != null && padre.hijoIzquierda == arbol) {
-                padre.hijoIzquierda = null;  // Desconectar el sucesor de su padre
-            }
-            
-            return arbol;  // Devuelve el sucesor
-        } else {
-            // Llamada recursiva para encontrar el sucesor más a la izquierda
-            return sucesorInmediato(arbol.hijoIzquierda);
-        }
-    }
-    //
+    //busca nodo siguiente
     private Nodo hallarNodoSiguiente(Nodo arbol){
         if (arbol == null){ 
             return null;
         }
         if (arbol.hijoDerecha != null) {
-            return hallarNodoConMinimo(arbol.hijoDerecha);
+            return hallarMinimo(arbol.hijoDerecha);
         }
         return hallarSiguienteNodoPadre(arbol);
     }
-
+    
+    //se mueve para arriba para encontrar el siguiente
     private Nodo hallarSiguienteNodoPadre(Nodo arbol) {
         if (arbol == null) {
             return null; 
@@ -289,13 +285,13 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         return hallarSiguienteNodoPadre(nodoPadre);
     }
     
-    private Nodo hallarNodoConMinimo(Nodo arbol) {
+    private Nodo hallarMinimo(Nodo arbol) {
         if (arbol == null) { 
             return null; 
         }
         if (arbol.hijoIzquierda == null) { 
             return arbol; 
         }
-        return hallarNodoConMinimo(arbol.hijoIzquierda);
+        return hallarMinimo(arbol.hijoIzquierda);
     }
 }
