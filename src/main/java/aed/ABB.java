@@ -1,5 +1,7 @@
 package aed;
 // elem1.compareTo(elem2) devuelve un entero. Si es mayor a 0, entonces elem1 > elem2
+
+
 public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     private Nodo raiz;
     private int cardinal;
@@ -58,7 +60,7 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             } //no se que tan bien esta
         }
     }
-
+    //auxiliar
     private Nodo perteneceUltimo(T elem){
         Nodo apuntado=this.raiz;
         while (true) {
@@ -100,7 +102,68 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     }
 
     public void eliminar(T elem){
-        
+        if(pertenece(elem)){
+            Nodo nodoEliminar = conseguirNodo(elem);
+            Nodo hijoBorrado = null;
+            switch (tieneHijos(nodoEliminar)) {
+                case 0:
+                    {//caso sin hijos
+                        Nodo padreBorrado = nodoEliminar.padre;
+                        if (padreBorrado.valor.compareTo(nodoEliminar.valor)>0){
+                            padreBorrado.hijoIzquierda = null;
+                        }else{
+                            padreBorrado.hijoDerecha = null;
+                        }       break;
+                    }
+                case 1:
+                    {//caso 1 hijo
+                        if (nodoEliminar.hijoDerecha == null){ //determino el hijo
+                            hijoBorrado = nodoEliminar.hijoIzquierda;
+                        }else{
+                            hijoBorrado = nodoEliminar.hijoDerecha;
+                        }       Nodo padreBorrado = nodoEliminar.padre;
+                        if (padreBorrado.valor.compareTo(nodoEliminar.valor)>0){ //determino de que lado venia el hijo
+                            padreBorrado.hijoIzquierda = hijoBorrado;
+                        }else{
+                            padreBorrado.hijoDerecha = hijoBorrado;
+                        }       hijoBorrado.padre = padreBorrado;
+                        nodoEliminar.padre = null;                
+                        nodoEliminar.hijoDerecha = null;
+                        nodoEliminar.hijoIzquierda = null;
+                        break;
+                    }
+                case 2:
+                    {//redundante pero caso 2 hijos
+                    }
+            }
+        }
+    }
+
+    //auxiliar
+    private int tieneHijos(Nodo nodo){
+        int hijos = 0;
+        if(nodo.hijoDerecha != null){
+            hijos += 1;
+        }
+        if(nodo.hijoIzquierda != null){
+            hijos += 1;
+        }
+        return hijos;
+    }
+
+    //auxiliar
+    //se supone que siempre va a pertenecer por lo cual nunca va a loopear perma
+    private Nodo conseguirNodo (T elem){
+        Nodo apuntado = this.raiz;
+        while (true) { 
+            if (apuntado.valor.equals(elem)) {
+                return apuntado;
+            }else if (apuntado.valor.compareTo(elem)>0){ //apuntado>elem
+                apuntado = apuntado.hijoIzquierda;
+            }else{ //caso derecha
+                apuntado = apuntado.hijoDerecha;
+            }
+        }
     }
 
     public String toString(){
