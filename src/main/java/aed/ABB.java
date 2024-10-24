@@ -1,5 +1,6 @@
 package aed;
 // elem1.compareTo(elem2) devuelve un entero. Si es mayor a 0, entonces elem1 > elem2
+
 public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     private Nodo raiz;
     private int cardinal;
@@ -67,14 +68,15 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     }
 
     public void eliminar(T elem) {
-        if (!this.pertenece(elem)) {  // Caso A: no pertenece
+        if (this.pertenece(elem) == false) {  // Caso A: no pertenece
             return;
         } 
         Nodo nodo = encontrarNodo(this.raiz, elem);
         if (nodo == null) {  
             return;  
         }
-        Nodo padre = nodo.padre;  
+        Nodo padre = nodo.padre;
+          
         // Caso B: es raíz sin hijos
         if (nodo == this.raiz && nodo.hijoDerecha == null && nodo.hijoIzquierda == null) {
             this.raiz = null;
@@ -82,7 +84,7 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             return;
         } 
         switch (cantidadHijos(nodo)) {  // Caso C: 0/1/2 hijos, no raíz
-            case 0:
+            case 0: 
                 this.cardinal -= 1;
                 if (padre != null) {  
                     if (padre.hijoIzquierda == nodo) {
@@ -92,43 +94,54 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
                     }
                 }
                 nodo.padre = null; 
-                break;   
-            case 1:
-                Nodo huerfano = (nodo.hijoDerecha == null) ? nodo.hijoIzquierda : nodo.hijoDerecha;
+                break;
+            case 1: 
+                Nodo huerfano = null;
+                if(nodo.hijoDerecha == null){
+                    huerfano = nodo.hijoIzquierda;
+                }else{
+                    huerfano = nodo.hijoDerecha;
+                }
                 if (padre != null) {  
                     if (padre.hijoIzquierda == nodo) {
                         padre.hijoIzquierda = huerfano;
                     } else {
                         padre.hijoDerecha = huerfano;
                     }
-                } else {  
+                } else {  // Si el nodo es la raíz
                     this.raiz = huerfano;
                 }
                 if (huerfano != null) { 
-                    huerfano.padre = padre; 
+                    huerfano.padre = padre;
                 }
                 this.cardinal -= 1;
+                
                 break;
-            case 2:
+            case 2: 
                 Nodo sucesor = sucesorInmediato(nodo.hijoDerecha);
                 if (sucesor != null) {  
                     sucesor.padre = nodo.padre; 
-                    if (nodo.padre == null) {  // Si es raíz
+                    if (nodo.padre == null) {  // Si es raiz
                         this.raiz = sucesor;
+                        this.raiz.padre = null;
                     } else if (nodo.padre.hijoIzquierda == nodo) {
                         nodo.padre.hijoIzquierda = sucesor;
                     } else {
                         nodo.padre.hijoDerecha = sucesor;
                     }
-                    sucesor.hijoIzquierda = nodo.hijoIzquierda; 
+                    sucesor.hijoIzquierda = nodo.hijoIzquierda;
                     if (nodo.hijoDerecha != sucesor) { 
                         sucesor.hijoDerecha = nodo.hijoDerecha; 
                     }
                 }
                 this.cardinal -= 1;
+                nodo.hijoIzquierda.padre = sucesor;
+                nodo.hijoDerecha.padre = sucesor;
+                
                 break;
         }
-    }    
+    }
+    
 
     public String toString(){
         Iterador<T> puntero = new ABB_Iterador();
@@ -145,19 +158,19 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     }
 
     private class ABB_Iterador implements Iterador<T> {
-        private Nodo _actual;
-        private Nodo _prev; 
-
+        private Nodo _actual = hallarNodoConMinimo(raiz);
+        
         public boolean haySiguiente() {            
             return this._actual != null; 
         }
     
         public T siguiente() {
-            Nodo actualViejo = this._actual;
-            this._prev = actualViejo;
-            Nodo siguiente = hallarNodoSiguiente(this._actual);
-            this._actual = siguiente;
-            return actualViejo.valor;    
+            if (this._actual == null) {
+                return  null;
+            }
+            T valorActual = this._actual.valor; 
+            _actual = hallarNodoSiguiente(_actual); 
+            return valorActual;
         }
     }
 
@@ -168,14 +181,6 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
 
 
     //auxiliares
-    private Nodo anteriorTarget(Nodo target){
-        Nodo actual = target;
-        if (actual == null){
-            return null;
-        }
-        return null;
-    }
-
     //paso recursivo de la diapo para pertenece
     private Boolean pertenceRecursivo (T target, Nodo nodo){
         if (nodo == null){
@@ -186,19 +191,6 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             return pertenceRecursivo(target, nodo.hijoIzquierda);
         }else{
             return pertenceRecursivo(target, nodo.hijoDerecha);
-        }
-    }
-
-    //modificacion de perteneceRecursivo, devuele nodo anterior de la busqueda
-    private Nodo perteneceRecursivoAnterior (T target, Nodo nodo){
-        if (nodo == null){
-            return null;
-        }else if (nodo.valor.equals(target)){
-            return nodo.padre;
-        }else if (nodo.valor.compareTo(target)>0){//nodo>target
-            return perteneceRecursivoAnterior(target, nodo.hijoIzquierda);
-        }else{
-            return perteneceRecursivoAnterior(target, nodo.hijoDerecha);
         }
     }
 
@@ -251,7 +243,6 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         }
     }
 
-
     //encuentra el nodo menor del lado derecho del arbol
     private Nodo sucesorInmediato(Nodo arbol) {
         if (arbol == null) {
@@ -285,16 +276,26 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     }
 
     private Nodo hallarSiguienteNodoPadre(Nodo arbol) {
-        Nodo nodoPadre = arbol.padre;
-        if (arbol == null || nodoPadre == null || arbol == nodoPadre.hijoIzquierda) return nodoPadre;
+        if (arbol == null) {
+            return null; 
+        }
+        Nodo nodoPadre = arbol.padre; 
+        if (nodoPadre == null) {
+            return null; 
+        }
+        if (arbol == nodoPadre.hijoIzquierda) {
+            return nodoPadre;
+        }
         return hallarSiguienteNodoPadre(nodoPadre);
     }
-
-    public Nodo hallarNodoConMinimo(Nodo arbol){
-        if(arbol.hijoIzquierda == null){ 
-            return arbol; 
-        }else{
-            return hallarNodoConMinimo(arbol.hijoIzquierda);
+    
+    private Nodo hallarNodoConMinimo(Nodo arbol) {
+        if (arbol == null) { 
+            return null; 
         }
-    } 
+        if (arbol.hijoIzquierda == null) { 
+            return arbol; 
+        }
+        return hallarNodoConMinimo(arbol.hijoIzquierda);
+    }
 }
